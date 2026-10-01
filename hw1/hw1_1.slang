@@ -11,6 +11,16 @@ void compute_main(uint2 tid : SV_DispatchThreadID,
         return;
     }
 
-    image[tid] = float4(1.0);
+    // image[tid] = float4(1.0);
     // TODO: your code here
+
+    // if thread's center is within center to radius color
+    float2 middle = tid.xy + float2(0.5, 0.5);
+    float distance = length(middle - center);
+    if (distance > radius) {
+        image[tid] = float4(0.5, 0.5, 0.5, 1.0);
+    } else {
+        image[tid] = float4(color, 1.0);
+    }
+    
 }

@@ -189,10 +189,47 @@ def compose_transformation(transforms):
 
     F = np.eye(3, dtype=np.float32)
 
-    for transform in transforms:
-        pass
-        # TODO: your code here
+    # translations given in order in the scene file
+    # so if we have scale, rotate, translate then it's TRS so left mult
+    # F is like our placeholder matrix we can left mult by
 
+    # {"scale": [200,100]},
+    # {"rotate": [45]},
+    # {"translate": [320,180]}
+
+    # create the 3x3 depending on which transformation
+
+    for transform in transforms:
+        # TODO: your code here
+        key, value = transform.items()
+
+        if key == "scale":
+            scale_x, scale_y = value
+            mat = np.matrix([scale_x, 0, 0], [0, scale_y, 0], [0, 0, 1])
+            F = mat @ F
+
+        elif key == "shear_x":
+            shear = value[0]
+            mat = np.matrix([1, shear, 0], [0, 1, 0], [0, 0, 1])
+            F = mat @ F
+
+        elif key == "shear_y":
+            shear = value[0]
+            mat = np.matrix([1, 0, 0], [shear, 1, 0], [0, 0, 1])
+            F = mat @ F
+
+        elif key == "rotate":
+            rot = math.radians(value[0])
+            mat = np.matrix([math.cos(rot), -math.sin(rot), 0], 
+                            [math.sin(rot), math.cos(rot), 0], 
+                            [0, 0, 1])
+            F = mat @ F
+
+        elif key == "translate":
+            shift_x, shift_y = value
+            mat = np.matrix([1, 0, shift_x], [0, 1, shift_y], [0, 0, 1])
+            F = mat @ F
+        
     return F
 
 def interpolate_transformation(transform_keyframes, t):

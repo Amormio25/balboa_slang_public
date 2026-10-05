@@ -201,33 +201,33 @@ def compose_transformation(transforms):
 
     for transform in transforms:
         # TODO: your code here
-        key, value = transform.items()
+        key, value = list(transform.keys())[0], list(transform.values())[0]
 
         if key == "scale":
             scale_x, scale_y = value
-            mat = np.matrix([scale_x, 0, 0], [0, scale_y, 0], [0, 0, 1])
+            mat = np.array([[scale_x, 0, 0], [0, scale_y, 0], [0, 0, 1]])
             F = mat @ F
 
         elif key == "shear_x":
             shear = value[0]
-            mat = np.matrix([1, shear, 0], [0, 1, 0], [0, 0, 1])
+            mat = np.array([[1, shear, 0], [0, 1, 0], [0, 0, 1]])
             F = mat @ F
 
         elif key == "shear_y":
             shear = value[0]
-            mat = np.matrix([1, 0, 0], [shear, 1, 0], [0, 0, 1])
+            mat = np.array([[1, 0, 0], [shear, 1, 0], [0, 0, 1]])
             F = mat @ F
 
         elif key == "rotate":
             rot = math.radians(value[0])
-            mat = np.matrix([math.cos(rot), -math.sin(rot), 0], 
+            mat = np.array([[math.cos(rot), -math.sin(rot), 0], 
                             [math.sin(rot), math.cos(rot), 0], 
-                            [0, 0, 1])
+                            [0, 0, 1]])
             F = mat @ F
 
         elif key == "translate":
             shift_x, shift_y = value
-            mat = np.matrix([1, 0, shift_x], [0, 1, shift_y], [0, 0, 1])
+            mat = np.array([[1, 0, shift_x], [0, 1, shift_y], [0, 0, 1]])
             F = mat @ F
         
     return F

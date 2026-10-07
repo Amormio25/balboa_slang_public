@@ -235,6 +235,85 @@ def compose_transformation(transforms):
 def interpolate_transformation(transform_keyframes, t):
     # TODO: your code here
 
+    # for each pair of the points just use formula
+    # w = current_time - t0 / t1-t0
+    # x = (1-w)x0 + wx1
+
+    i = 0
+    while t >= transform_keyframes[i+1]["time"]:
+        i += 1
+    key0, key1 = transform_keyframes[i], transform_keyframes[i+1]
+
+    t0, t1 = key0["time"], key1["time"]
+
+    # gives [{scale, []}, {translate, []}]
+    transform_object0 = transform_keyframes[i]["transform"]
+    transform_object1 = transform_keyframes[i + 1]["transform"]
+
+
+    # for each transformation
+    #   calculate
+    #   get the new values
+    # exit loop
+    # create the object
+    # insert the new transformation
+
+    new_transform_object = []
+    for i in range(len(transform_object0)):
+        tr0 = transform_object0[i]
+        tr1 = transform_object1[i]
+
+        # scale, []
+        key0, value0 = list(tr0.keys())[0], list(tr0.values())[0]
+        key1, value1 = list(tr1.keys())[0], list(tr1.values())[0]
+
+  
+        if key0 == "scale":
+            scale0_x, scale0_y = value0
+            scale1_x, scale1_y = value1
+
+            w = (t - t0) / (t1 - t0)
+            interpolated_x = (1-w)*scale0_x + w*scale1_x
+            interpolated_y = (1-w)*scale0_y + w*scale1_y
+            new_transform_object.append({
+                "scale": [interpolated_x, interpolated_y]
+            })
+            
+        elif key0 == "shear_x":
+            w = (t - t0) / (t1 - t0)
+            x = (1-w) * value0[0] + w * value1[0]
+            new_transform_object.append({
+                "shear_x": [x]
+            })
+
+        elif key0 == "shear_y":
+            w = (t - t0) / (t1 - t0)
+            x = (1-w) * value0[0] + w * value1[0]
+            new_transform_object.append({
+                "shear_y": [x]
+            })
+
+        elif key0 == "rotate":
+            w = (t - t0) / (t1 - t0)
+            x = (1-w) * value0[0] + w * value1[0]
+            new_transform_object.append({
+                "rotate": [x]
+            })
+
+        elif key0 == "translate":
+            translate0_x, translate0_y = value0
+            translate1_x, translate1_y = value1
+
+            w = (t - t0) / (t1 - t0)
+            interpolated_x = (1-w)*translate0_x + w*translate1_x
+            interpolated_y = (1-w)*translate0_y + w*translate1_y
+            new_transform_object.append({
+                "translate": [interpolated_x, interpolated_y]
+            })
+
+    return new_transform_object
+
+
     # Should never happen?
     assert False
 

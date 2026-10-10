@@ -31,8 +31,8 @@ void compute_main(uint2 tid : SV_DispatchThreadID,
     // 
     float4 total_color = float4(0);
     for (int j = 0; j < pow(samples_per_axis, 2); j++) {
-        float row = j / samples_per_axis;
-        float col = j % samples_per_axis;
+        int row = j / samples_per_axis;
+        int col = j % samples_per_axis;
         float4 start_color = float4(background, 1.0); 
         
         for (int i = num_shapes-1; i >= 0; i--) {

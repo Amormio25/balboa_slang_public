@@ -1,0 +1,50 @@
+{
+    "resolution": [600, 600],
+    "background": [1.0, 1.0, 1.0],
+    "objects": [
+    {
+        "type": "rectangle",
+        "p_min": [60, 60],
+        "p_max": [280, 280],
+        "use_fill": true,
+        "fill_rgba": [0.965, 0.325, 0.078, 1.0],
+        "use_stroke": false,
+        "transform": [
+            {"translate": [100, 0]}
+        ]
+    },
+    {
+        "type": "rectangle",
+        "p_min": [320, 60],
+        "p_max": [540, 280],
+        "use_fill": true,
+        "fill_rgba": [0.486, 0.733, 0.0, 1.0],
+        "use_stroke": false,
+        "transform": [
+            {"translate": [100, 0]}
+        ]
+    },
+    {
+        "type": "rectangle",
+        "p_min": [60, 320],
+        "p_max": [280, 540],
+        "use_fill": true,
+        "fill_rgba": [0.0, 0.631, 0.945, 1.0],
+        "use_stroke": false,
+        "transform": [
+            {"translate": [100, 0]}
+        ]
+    },
+    {
+        "type": "rectangle",
+        "p_min": [320, 320],
+        "p_max": [540, 540],
+        "use_fill": true,
+        "fill_rgba": [1.0, 0.733, 0.0, 1.0],
+        "use_stroke": false,
+        "transform": [
+            {"translate": [100, 0]}
+        ]
+    }
+    ]
+}

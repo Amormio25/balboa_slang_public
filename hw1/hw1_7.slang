@@ -12,6 +12,10 @@ void compute_main(uint2 tid : SV_DispatchThreadID,
                   StructuredBuffer<QuadraticBezier> /*quadratic_beziers*/, // ignore for now
                   StructuredBuffer<float2> points,
                   RWTexture2D<float4> image) {
+    // LLM usage:
+    // Model: ChatGPT, GPT-6
+    // I was running into issues at first using the formula from the slides, I realized only later that the slide example was going from top to bottom in order. Since I was going bottom to top, I struggled to figure out how to adjust the formula. AI helped me with getting the eventual formula to apply: start_color = curr_layer alpha x curr_layer color + (1-curr_layer alpha) x current start_color.
+    // even using this formula I still needed a little help because the computations wouldn't assign directly to a float4 value, so I got some help with splitting it up to the color and alpha how it is now.
     uint width, height;
     image.GetDimensions(width, height);
     if (tid.x >= width || tid.y >= height) {

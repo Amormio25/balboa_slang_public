@@ -12,6 +12,10 @@ void compute_main(uint2 tid : SV_DispatchThreadID,
                   uniform float3 stroke_color,
                   uniform float stroke_width,
                   RWTexture2D<float4> image) {
+    // LLM usage:
+    // Model: ChatGPT, GPT-6
+    // I used ChatGPT to help a bit when I had trouble understanding syntax like floatn. I also ran into issues with getting colors layered properly, sometimes one would override a previous color. I used it to brainstorm how I might reorganize my code (you can see the commented code) and I ended up with the current implementation where I turned it into separated helper functions with boolean flags. Finally I was wondering how to know if something should have a rounded join or not, not realizing that if closed all would be rounded but if not closed then the last two points weren't rounded.
+
     uint width, height;
     image.GetDimensions(width, height);
     if (tid.x >= width || tid.y >= height) {

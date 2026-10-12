@@ -186,6 +186,9 @@ def compose_transformation(transforms):
     """
         Given a list of transformations, compose them into a matrix.
     """
+    # LLM usage:
+    # Model: ChatGPT, GPT-6
+    # Asked for help with python syntax to get key, value easily in the for loop
 
     F = np.eye(3, dtype=np.float32)
 
@@ -201,6 +204,7 @@ def compose_transformation(transforms):
 
     for transform in transforms:
         # TODO: your code here
+        
         key, value = list(transform.keys())[0], list(transform.values())[0]
 
         if key == "scale":
@@ -238,6 +242,9 @@ def interpolate_transformation(transform_keyframes, t):
     # for each pair of the points just use formula
     # w = current_time - t0 / t1-t0
     # x = (1-w)x0 + wx1
+    # LLM usage:
+    # Model: ChatGPT, GPT-6
+    # Used for help with syntax getting key0 and value0. Also had back and forths to clarify my understanding of this function since my initial thought was that I'd get the transformation for t and insert it back into the transform_keyframes, which was wrong, and that I just needed to return the new transformation. 
 
     i = 0
     while t >= transform_keyframes[i+1]["time"]:

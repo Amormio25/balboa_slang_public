@@ -12,6 +12,9 @@ void compute_main(uint2 tid : SV_DispatchThreadID,
                   StructuredBuffer<QuadraticBezier> /*quadratic_beziers*/, // ignore for now
                   StructuredBuffer<float2> points,
                   RWTexture2D<float4> image) {
+    // LLM usage:
+    // Model: ChatGPT, GPT-6
+    // Mainly used it to clarify my understanding since I was really confused and thought we needed to transform (get the canvas space), and THEN use the inverse to transform into object space. After some back and forth I learned that I could give some point to the inverse function and say "If we invert and get the object point, if it's inside the shape/stroke for the object space, then I should be in as well". 
     uint width, height;
     image.GetDimensions(width, height);
     if (tid.x >= width || tid.y >= height) {

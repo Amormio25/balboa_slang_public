@@ -1,38 +1,18 @@
 {
     "resolution": [600, 600],
     "background": [1.0, 1.0, 1.0],
+    "duration": 2.0,
     "objects": [
-    {
-        "type": "rectangle",
-        "p_min": [60, 60],
-        "p_max": [280, 280],
-        "use_fill": true,
-        "fill_rgba": [0.965, 0.325, 0.078, 1.0],
-        "use_stroke": false,
-        "transform": [
-            {"translate": [100, 0]}
-        ]
-    },
-    {
-        "type": "rectangle",
-        "p_min": [320, 60],
-        "p_max": [540, 280],
-        "use_fill": true,
-        "fill_rgba": [0.486, 0.733, 0.0, 1.0],
-        "use_stroke": false,
-        "transform": [
-            {"translate": [100, 0]}
-        ]
-    },
     {
         "type": "rectangle",
         "p_min": [60, 320],
         "p_max": [280, 540],
         "use_fill": true,
-        "fill_rgba": [0.0, 0.631, 0.945, 1.0],
+        "fill_rgba": [0.949, 0.314, 0.133, 1.0],
         "use_stroke": false,
-        "transform": [
-            {"translate": [100, 0]}
+        "transform_keyframes": [
+            {"time": 0.0, "transform": [{"translate": [0, 0]}]},
+            {"time": 2.0, "transform": [{"translate": [100, 0]}]}
         ]
     },
     {
@@ -40,10 +20,35 @@
         "p_min": [320, 320],
         "p_max": [540, 540],
         "use_fill": true,
-        "fill_rgba": [1.0, 0.733, 0.0, 1.0],
+        "fill_rgba": [0.498, 0.729, 0.000, 1.0],
         "use_stroke": false,
-        "transform": [
-            {"translate": [100, 0]}
+        "transform_keyframes": [
+            {"time": 0.0, "transform": [{"translate": [0, 0]}]},
+            {"time": 2.0, "transform": [{"translate": [100, 0]}]}
+        ]
+    },
+    {
+        "type": "rectangle",
+        "p_min": [60, 60],
+        "p_max": [280, 280],
+        "use_fill": true,
+        "fill_rgba": [0.000, 0.643, 0.937, 1.0],
+        "use_stroke": false,
+        "transform_keyframes": [
+            {"time": 0.0, "transform": [{"translate": [0, 0]}]},
+            {"time": 2.0, "transform": [{"translate": [100, 0]}]}
+        ]
+    },
+    {
+        "type": "rectangle",
+        "p_min": [320, 60],
+        "p_max": [540, 280],
+        "use_fill": true,
+        "fill_rgba": [1.000, 0.725, 0.000, 1.0],
+        "use_stroke": false,
+        "transform_keyframes": [
+            {"time": 0.0, "transform": [{"translate": [0, 0]}]},
+            {"time": 2.0, "transform": [{"translate": [100, 0]}]}
         ]
     }
     ]

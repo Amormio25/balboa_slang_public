@@ -28,3 +28,8 @@ You should see a window with white background.
 Balboa depends on [SlangPy](https://github.com/shader-slang/slangpy) as a GPU programming framework, and should work on Windows, Linux, and Apple Silicon Macs. 
 
 **Intel Macs:** SlangPy does not currently publish macOS x86_64 wheels, so setup may require building SlangPy from source. If you are using an Intel Mac and `uv sync` fails because no compatible SlangPy package is available, you may need to build SlangPy from source. Contact the staff/instructor if you run into issues.
+
+
+## Custom Scene
+- **Designed Scene:** 'scenes/hs1/windows_logo.json'
+- **Output Rendering:** 'outputs/windows_logo.png'

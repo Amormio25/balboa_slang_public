@@ -17,4 +17,6 @@ void compute_main(uint2 tid : SV_DispatchThreadID,
     // TODO: HW 2.1
 
     image[ipixel] = float4(float3(0.0), 1.0);
+
+    // note: read the writeup carefully for this since it explains a lot but a simple explanation why we divide by -z is this: remember we have line from origin to our point in 3d space, and the intersection with image plane is the projected point. To get there we basically just go in the -z direction less.
 }

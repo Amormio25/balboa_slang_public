@@ -20,7 +20,24 @@ def hw2_1(args):
     def to_screen(p):
         # HW2.1: implement this
         # access "s" using args.s
-        return (0.0, 0.0)
+
+        # convert camera point (3d vec) to projected space (-z formula)
+        x_prime, y_prime = -p.x/p.z, -p.y/p.z
+        s, aspect_ratio = args.s, args.width / args.height
+
+        # convert projected space to screen space 
+        # -sa to sa is image 
+        # screen space is 0 to w so add sa to shift to 0,sa
+        # then divide by sa to get 0,1, then multiply by w to get 0,w
+        x_double_prime = args.width * \
+                        ((x_prime + s * aspect_ratio) / (2 * s * aspect_ratio))
+
+        # -s to s into 0 to 2s
+        # screen space 0 starts at top
+        # y_double_prime = args.height * (y_prime + s) / (2 * s)
+        y_double_prime = args.height * (s - y_prime) / (2 * s)
+
+        return x_double_prime, y_double_prime
 
     sp0 = to_screen(args.p0)
     sp1 = to_screen(args.p1)

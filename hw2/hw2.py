@@ -22,7 +22,7 @@ def hw2_1(args):
         # access "s" using args.s
 
         # convert camera point (3d vec) to projected space (-z formula)
-        x_prime, y_prime = -p.x/p.z, -p.y/p.z
+        x_prime, y_prime = -p[0]/p[2], -p[1]/p[2]
         s, aspect_ratio = args.s, args.width / args.height
 
         # convert projected space to screen space 
@@ -44,8 +44,12 @@ def hw2_1(args):
     sp2 = to_screen(args.p2)
 
     # HW2.1: implement this
-    aabb_min = (0, 0)
-    aabb_max = (10, 10)
+    # note since we're top left origin, this gets top left and bottom right of 
+    # triangle
+    aabb_min = (math.floor(min(sp0[0], sp1[0], sp2[0])),
+                math.floor(min(sp0[1], sp1[1], sp2[1])))
+    aabb_max = (math.ceil(max(sp0[0], sp1[0], sp2[0])),
+                math.ceil(max(sp0[1], sp1[1], sp2[1])))
 
     vars = {'sp0': sp0,
             'sp1': sp1,
@@ -63,9 +67,9 @@ def hw2_1(args):
 
         # Launch the kernel 
         compute_shader.kernel.dispatch(
-            thread_count=[aabb_max[0] - aabb_min[0] + 1,
+            thread_count=spy.uint3([aabb_max[0] - aabb_min[0] + 1,
                           aabb_max[1] - aabb_min[1] + 1,
-                          1],
+                          1]),
             command_encoder=command_encoder,
             image=img,
             **vars,

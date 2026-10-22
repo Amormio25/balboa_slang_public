@@ -203,24 +203,54 @@ def hw2_3(args):
 
     # HW 2.3: implement this
     # change np.zeros into the right matrices
-    projection = np.zeros((4, 4), dtype=np.float32)
-    camera_to_screen = np.zeros((4, 4), dtype=np.float32)
+
+    projection = np.array([
+        [1, 0,  0, 0],
+        [0, 1,  0, 0],
+        [0, 0,  0, 1],
+        [0, 0, -1, 0],
+    ], dtype=np.float32)    
+
+    s = camera.s
+    camera_to_screen = np.array([
+        [width / (2 * s * a), 0, 0, width / 2],
+        [0, -height / (2 * s), 0, height / 2],
+        [0, 0, 1, 0],
+        [0, 0, 0, 1],
+    ], dtype=np.float32)
+
     # use camera.cam_to_world
-    view_matrix = np.zeros((4, 4), dtype=np.float32)
-    world_to_screen = np.zeros((4, 4), dtype=np.float32)
-    
+
+    # basically result of the compose_transformations, point in camera space to world (view frustum look to like being directly on the 0,0,0 coordinate of xyz rather than looking from camera  )
+    view_matrix = np.linalg.inv(camera.cam_to_world)
+    # vertex in world space ends up in camera space which is what projection expects
+
+    # projected to pixels, camera to projected, world to camera
+    # and so we left multiply with this later on
+    world_to_screen = camera_to_screen @ projection @ view_matrix
+
     screen_vertices_list = []
     inv_depth_list = []
     for mesh in scene.meshes:
         # HW 2.3: implement this
         # change np.zeros into the right matrix
-        # use mesh.model_matrix
-        MVP = np.zeros((4, 4), dtype=np.float32)
+        # use mesh.model_matrix which is object to world
+
+        # so for one vertex, object to world via model matrix, to camera to projected to pixels via world_to_screen PVM
+        MVP = world_to_screen @ mesh.model_matrix
+
         ones = np.ones((mesh.vertices.shape[0], 1), dtype=mesh.vertices.dtype)
+        #  like xyz vectors into xyz1 homogeneous coordinates
         vertices = np.concatenate(
             [mesh.vertices, ones],
             axis=1
         )
+
+        # transpose since vertices are rows
+        vertices = vertices @ MVP.T
+
+        # divide by the 4th component, basically change homogenous coordinate into projected coords so farther objects seem smaller  
+        vertices = vertices / vertices[:, 3:4]
         # transform vertices using MVP & homogeneous coordinates division
         # The resulting vertices should contain
         # (screen_x, screen_y, inverse_depth).
@@ -252,6 +282,20 @@ def hw2_3(args):
             for tri_id in range(mesh.faces.shape[0]):
                 # HW 2.3: implement this
                 # (basically the same as HW 2.2)
+                v0, v1, v2 = mesh.faces[tri_id]
+
+                sp0, sp1, sp2 = screen_vertices[v0], screen_vertices[v1], screen_vertices[v2]
+
+                inv_depth0 = inv_depth[v0]
+                inv_depth1 = inv_depth[v1]
+                inv_depth2 = inv_depth[v2]
+
+                aabb_min = (math.floor(min(sp0[0], sp1[0], sp2[0])),
+                            math.floor(min(sp0[1], sp1[1], sp2[1])))
+                aabb_max = (math.ceil(max(sp0[0], sp1[0], sp2[0])),
+                            math.ceil(max(sp0[1], sp1[1], sp2[1])))
+
+                c0, c1, c2 = mesh.vertex_colors[v0], mesh.vertex_colors[v1], mesh.vertex_colors[v2]
 
                 if aabb_min[0] > aabb_max[0] or aabb_min[1] > aabb_max[1]:
                     continue
@@ -269,9 +313,9 @@ def hw2_3(args):
                               's': camera.s,
                               'a': a}
                 compute_shader.kernel.dispatch(
-                    thread_count=[aabb_max[0] - aabb_min[0] + 1,
+                    thread_count=spy.uint3([aabb_max[0] - aabb_min[0] + 1,
                                   aabb_max[1] - aabb_min[1] + 1,
-                                  1],
+                                  1]),
                     command_encoder=command_encoder,
                     color_image=color_image,
                     depth_image=depth_image,

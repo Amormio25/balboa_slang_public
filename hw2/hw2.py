@@ -100,9 +100,18 @@ def hw2_2(args):
 
     def to_screen(p):
         # HW2.2: implement this (basically the same as HW2.1)
-        return (0.0, 0.0)
+        # maybe different in that it's 3d?
+        x_prime, y_prime = -p[0]/p[2], -p[1]/p[2]
+        s, aspect_ratio = args.s, args.width / args.height
 
-    # splat the triangles onto the screen
+        x_double_prime = args.width * \
+                        ((x_prime + s * aspect_ratio) / (2 * s * aspect_ratio))
+
+        y_double_prime = args.height * (s - y_prime) / (2 * s)
+
+        return x_double_prime, y_double_prime
+
+    # split the triangles onto the screen
     screen_vertices = [to_screen(mesh.vertices[vid, :]) for vid in range(mesh.vertices.shape[0])]
 
     def render(command_encoder, vars, img):
@@ -120,12 +129,26 @@ def hw2_2(args):
             # HW2.2: implement this
             # you need to retrieve/compute:
             # sp0, sp1, sp2 from screen_vertices
+
+            # get the three vertex indices for curr triangle
+            v0, v1, v2 = mesh.faces[tri_id]
+
+            # get the projected screen space vertices
+            sp0, sp1, sp2 = screen_vertices[v0], screen_vertices[v1], screen_vertices[v2]
+
             # inv_depth0, inv_depth1, inv_depth2 from the Z coordinates
             # (recall that camera-space depth is -z, which we assume is positive)
-            # aabb_min & aabb_max like in 2.1
-            # c0, c1, c2 from mesh.vertex_colors
-            # use mesh.faces[tri_id] to obtain the vertex indices
+            inv_depth0 = -1 / mesh.vertices[v0, 2]
+            inv_depth1 = -1 / mesh.vertices[v1, 2]
+            inv_depth2 = -1 / mesh.vertices[v2, 2]
 
+            aabb_min = (math.floor(min(sp0[0], sp1[0], sp2[0])),
+                        math.floor(min(sp0[1], sp1[1], sp2[1])))
+            aabb_max = (math.ceil(max(sp0[0], sp1[0], sp2[0])),
+                        math.ceil(max(sp0[1], sp1[1], sp2[1])))
+
+            c0, c1, c2 = mesh.vertex_colors[v0], mesh.vertex_colors[v1], mesh.vertex_colors[v2]
+            
             if aabb_min[0] > aabb_max[0] or aabb_min[1] > aabb_max[1]:
                 continue
 
@@ -142,9 +165,9 @@ def hw2_2(args):
                           's': args.s,
                           'a': a}
             compute_shader.kernel.dispatch(
-                thread_count=[aabb_max[0] - aabb_min[0] + 1,
+                thread_count=spy.uint3([aabb_max[0] - aabb_min[0] + 1,
                               aabb_max[1] - aabb_min[1] + 1,
-                              1],
+                              1]),
                 command_encoder=command_encoder,
                 color_image=color_image,
                 depth_image=depth_image,

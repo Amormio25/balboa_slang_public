@@ -187,8 +187,100 @@ def compose_transformations(transformations):
     F = np.eye(4, dtype=np.float32)
 
     for transform in transformations:
-        pass
+        # transformation is list of objects where key is the type of the transformation, value is an object 
+
         # HW 2.3 TODO: your code here
+        # e.g. lookAt, { targe}
+        key, value = list(transform.keys())[0], list(transform.values())[0]
+
+        if key == "scale":
+            scale_x, scale_y, scale_z = value
+            mat = np.array([
+                [scale_x, 0, 0, 0],
+                [0, scale_y, 0, 0],
+                [0, 0, scale_z, 0],
+                [0, 0, 0, 1],
+            ], dtype=np.float32)
+
+        elif key == "translate":
+            shift_x, shift_y, shift_z = value
+            mat = np.array([
+                [1, 0, 0, shift_x],
+                [0, 1, 0, shift_y],
+                [0, 0, 1, shift_z],
+                [0, 0, 0, 1],
+            ], dtype=np.float32)
+
+        elif key == "rotate_x":
+            rot = math.radians(value[0])
+            mat = np.array([
+                [1, 0, 0, 0],
+                [0, math.cos(rot), -math.sin(rot), 0],
+                [0, math.sin(rot),  math.cos(rot), 0],
+                [0, 0, 0, 1],
+            ], dtype=np.float32)
+
+        elif key == "rotate_y":
+            rot = math.radians(value[0])
+            mat = np.array([
+                [math.cos(rot), 0, math.sin(rot), 0],
+                [0, 1, 0, 0],
+                [-math.sin(rot), 0, math.cos(rot), 0],
+                [0, 0, 0, 1],
+            ], dtype=np.float32)
+
+        elif key == "rotate_z":
+            rot = math.radians(value[0])
+            mat = np.array([
+                [math.cos(rot), -math.sin(rot), 0, 0],
+                [math.sin(rot), math.cos(rot), 0, 0],
+                [0, 0, 1, 0],
+                [0, 0, 0, 1],
+            ], dtype=np.float32)
+
+        elif key == "lookat":
+            pos_x, pos_y, pos_z = value["position"]
+            target_x, target_y, target_z = value["target"]
+            up_x, up_y, up_z = value["up"]
+
+            # d=normalize(t-p)
+            dir_x = target_x - pos_x
+            dir_y = target_y - pos_y
+            dir_z = target_z - pos_z
+
+            # normalize them
+            dir_len = math.sqrt(dir_x * dir_x 
+                                + dir_y * dir_y 
+                                + dir_z * dir_z)
+            dir_x /= dir_len
+            dir_y /= dir_len
+            dir_z /= dir_len
+
+            # r=normalize(d x u)
+            right_x = dir_y * up_z - dir_z * up_y
+            right_y = dir_z * up_x - dir_x * up_z
+            right_z = dir_x * up_y - dir_y * up_x
+
+            right_len = math.sqrt(right_x * right_x 
+                                + right_y * right_y 
+                                + right_z * right_z)
+            right_x /= right_len
+            right_y /= right_len
+            right_z /= right_len
+
+            # u' = r x d
+            up_p_x = right_y * dir_z - right_z * dir_y
+            up_p_y = right_z * dir_x - right_x * dir_z
+            up_p_z = right_x * dir_y - right_y * dir_x
+
+            mat = np.array([
+                [right_x, up_p_x, -dir_x, pos_x],
+                [right_y, up_p_y, -dir_y, pos_y],
+                [right_z, up_p_z, -dir_z, pos_z],
+                [0,       0,      0,      1],
+            ], dtype=np.float32)
+
+        F = mat @ F   # same left-multiply idea as hw1
 
     return F
 

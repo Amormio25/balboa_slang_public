@@ -591,13 +591,37 @@ def hw2_5(args):
 
     # HW 2.5 TODO: implement this (basically the same as 2.3 and 2.4)
     # change np.zeros into the right matrices
-    projection = np.zeros((4, 4), dtype=np.float32)
-    camera_to_screen = np.zeros((4, 4), dtype=np.float32)
+    projection = np.array([
+        [1, 0,  0, 0],
+        [0, 1,  0, 0],
+        [0, 0,  0, 1],
+        [0, 0, -1, 0],
+    ], dtype=np.float32)
+
+    s = camera.s
+    camera_to_screen = np.array([
+        [width / (2 * s * a), 0, 0, width / 2],
+        [0, -height / (2 * s), 0, height / 2],
+        [0, 0, 1, 0],
+        [0, 0, 0, 1],
+    ], dtype=np.float32)
 
     def render_frame(command_encoder, t):
-        t = t % scene.duration
+        t = t % scene.duration # for looping
         # HW 2.5 TODO: implement this (basically the same as 2.4)
-        world_to_screen = np.zeros((4, 4), dtype=np.float32)
+
+        # if the camera is gonna be moving, we interpolate
+        if camera.transform_keyframes:
+            cam_transforms = interpolate_transformation(
+                camera.transform_keyframes, t)
+            
+            cam_to_world = hw2_scene.compose_transformations(cam_transforms)
+        else:
+            # static
+            cam_to_world = camera.cam_to_world
+
+        view_matrix = np.linalg.inv(cam_to_world)
+        world_to_screen = camera_to_screen @ projection @ view_matrix
 
         command_encoder.clear_texture_float(
             color_image,
@@ -609,9 +633,19 @@ def hw2_5(args):
 
         # Transform the vertices per mesh because each mesh
         # has a different model matrix
+        # each object may also have their own transformations
         for mesh, offset in zip(scene.meshes, vertex_offsets):
             # HW 2.5 TODO: implement this (basically the same as 2.4)
-            MVP = np.zeros((4, 4), dtype=np.float32)
+            if mesh.transform_keyframes:
+                mesh_transforms = interpolate_transformation(
+                    mesh.transform_keyframes, t)
+                model_matrix = hw2_scene.compose_transformations(mesh_transforms)
+            else:
+                # static
+                model_matrix = mesh.model_matrix
+
+            MVP = world_to_screen @ model_matrix
+
             transform_vertices_shader.kernel.dispatch(\
                 thread_count=[mesh.vertices.shape[0], 1, 1],
                 command_encoder=command_encoder,
@@ -803,14 +837,28 @@ def hw2_6(args):
         t = t % scene.duration
         # HW 2.6 TODO: compute the view matrix
         # remember to handle animation if keyframes exist
-        view_matrix = np.zeros((4, 4), dtype=np.float32)
+        # view_matrix = np.zeros((4, 4), dtype=np.float32)
+        if camera.transform_keyframes:
+            cam_transforms = interpolate_transformation(
+                camera.transform_keyframes, t)
+            cam_to_world = hw2_scene.compose_transformations(cam_transforms)
+        else:
+            cam_to_world = camera.cam_to_world
+
+        view_matrix = np.linalg.inv(cam_to_world)
 
         render_pass = command_encoder.begin_render_pass(render_pass_desc)
 
         for mesh, gpu_mesh in zip(scene.meshes, gpu_meshes):
             # HW 2.6 TODO: compute the model matrix
             # remember to handle animation if keyframes exist
-            model_matrix = np.zeros((4, 4), dtype=np.float32)
+            # model_matrix = np.zeros((4, 4), dtype=np.float32)
+            if mesh.transform_keyframes:
+                mesh_transforms = interpolate_transformation(
+                    mesh.transform_keyframes, t)
+                model_matrix = hw2_scene.compose_transformations(mesh_transforms)
+            else:
+                model_matrix = mesh.model_matrix
 
             MVP = clip_projection @ view_matrix @ model_matrix
 

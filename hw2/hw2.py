@@ -343,8 +343,45 @@ def interpolate_transformation(transform_keyframes, t):
     #
     # Return a list of transformations in the same format
     # as the "transform" field in the scene JSON.
-    interp_transforms = []
+    if not transform_keyframes:
+        return None
+    
+    #find the two keyframes surrounding t
+    k0 = transform_keyframes[-1]
+    k1= transform_keyframes[0]
 
+    for i in range(len(transform_keyframes) - 1):
+        if transform_keyframes[i]["time"] <= t <= transform_keyframes[i+1]["time"]:
+            k0 = transform_keyframes[i]
+            k1 = transform_keyframes[i+1]
+            break
+            
+    t0 = k0["time"]
+    t1 = k1["time"]
+    
+    # compute normalized interpolation weight w
+    if t1 == t0:
+        w = 0.0
+    else:
+        w = (t - t0) / (t1 - t0)
+        
+    interp_transforms = []
+    for t_prev, t_next in zip(k0["transform"], k1["transform"]):
+        key = list(t_prev.keys())[0]
+        val0 = t_prev[key]
+        val1 = t_next[key]
+    
+        def interpolate_value(v0, v1, w):
+            if isinstance(v0, list):
+                return [x * (1 - w) + y * w for x, y in zip(v0, v1)]
+            elif isinstance(v0, dict):
+                return {sub_k: interpolate_value(v0[sub_k], v1[sub_k], w) for sub_k in v0.keys()}
+            else:
+                return v0 * (1 - w) + v1 * w
+            
+        val_interp = interpolate_value(val0, val1, w)
+        interp_transforms.append({key: val_interp})
+        
     return interp_transforms
     
 def hw2_4(args):
@@ -361,27 +398,46 @@ def hw2_4(args):
 
     # HW 2.4 TODO: implement this (basically the same as 2.3)
     # change np.zeros into the right matrices
-    projection = np.zeros((4, 4), dtype=np.float32)
-    camera_to_screen = np.zeros((4, 4), dtype=np.float32)
+    projection = np.array([
+        [1, 0, 0, 0],
+        [0, 1, 0, 0],
+        [0, 0, 0, 1],
+        [0, 0, -1, 0]
+    ], dtype=np.float32)
+
+    s = camera.s
+    camera_to_screen = np.array([
+        [width / (2 * s * a), 0, 0, width / 2],
+        [0, -height / (2 * s), 0, height / 2],
+        [0, 0, 1, 0],
+        [0, 0, 0, 1]
+    ], dtype=np.float32)
 
     def render_frame(command_encoder, t):
         t = t % scene.duration
-        # HW 2.4 TODO: insert your code here and fill in world_to_screen
-        # by using interpolate_transformation to compute the view matrix at time t
-        world_to_screen = np.zeros((4, 4), dtype=np.float32)
-        
+    
+        # HW 2.4: Interpolate camera transform if keyframes exist
+        cam_transforms = interpolate_transformation(scene.camera.transform_keyframes, t) if hasattr(scene.camera, 'transform_keyframes') and scene.camera.transform_keyframes else None
+        cam_to_world = hw2_scene.compose_transformations(cam_transforms) if cam_transforms is not None else camera.cam_to_world
+    
+        view_matrix = np.linalg.inv(cam_to_world)
+        world_to_screen = camera_to_screen @ projection @ view_matrix
+    
         screen_vertices_list = []
         inv_depth_list = []
+    
         for mesh in scene.meshes:
-            # HW 2.4 TODO: insert your code here and fill in the MVP matrix
-            # by using interpolate_transformation to compute the model matrix at time t
-            MVP = np.zeros((4, 4), dtype=np.float32)
+            # HW 2.4: Interpolate mesh model matrix if keyframes exist
+            mesh_transforms = interpolate_transformation(mesh.transform_keyframes, t) if hasattr(mesh, 'transform_keyframes') and mesh.transform_keyframes else None
+            model_matrix = hw2_scene.compose_transformations(mesh_transforms) if mesh_transforms is not None else mesh.model_matrix
+        
+            MVP = world_to_screen @ model_matrix
+        
             ones = np.ones((mesh.vertices.shape[0], 1), dtype=mesh.vertices.dtype)
-            vertices = np.concatenate(
-                [mesh.vertices, ones],
-                axis=1
-            )
-            # HW 2.4 TODO: insert your code here (basically the same as 2.3)
+            vertices = np.concatenate([mesh.vertices, ones], axis=1)
+            vertices = vertices @ MVP.T
+            vertices = vertices / vertices[:, 3:4]
+        
             inv_depth_list.append(np.ascontiguousarray(vertices[:, 2]))
             screen_vertices_list.append(np.ascontiguousarray(vertices[:, :2]))
 
@@ -390,9 +446,9 @@ def hw2_4(args):
         command_encoder.clear_texture_float(
             color_image,
             clear_value=spy.float4(scene.background[0],
-                                   scene.background[1], 
-                                   scene.background[2],
-                                   1.0)
+                                    scene.background[1],
+                                    scene.background[2],
+                                    1.0)
         )
         # Clear depth buffer
         command_encoder.clear_texture_float(
@@ -406,7 +462,24 @@ def hw2_4(args):
             for tri_id in range(mesh.faces.shape[0]):
                 # HW 2.4 TODO: implement this
                 # (basically the same as HW 2.2 & 2.3)
+                v0, v1, v2 = mesh.faces[tri_id]
+                sp0, sp1, sp2 = screen_vertices[v0], screen_vertices[v1], screen_vertices[v2]
+                inv_depth0, inv_depth1, inv_depth2 = inv_depth[v0], inv_depth[v1], inv_depth[v2]
 
+                # Check if vertices contain NaN or inf
+                if not (np.isfinite(sp0).all() and np.isfinite(sp1).all() and np.isfinite(sp2).all()):
+                    continue
+
+                aabb_min = (
+                    math.floor(min(sp0[0], sp1[0], sp2[0])),
+                    math.floor(min(sp0[1], sp1[1], sp2[1]))
+                )
+                aabb_max = (
+                    math.ceil(max(sp0[0], sp1[0], sp2[0])),
+                    math.ceil(max(sp0[1], sp1[1], sp2[1]))
+                )
+
+                c0, c1, c2 = mesh.vertex_colors[v0], mesh.vertex_colors[v1], mesh.vertex_colors[v2]
                 if aabb_min[0] > aabb_max[0] or aabb_min[1] > aabb_max[1]:
                     continue
 

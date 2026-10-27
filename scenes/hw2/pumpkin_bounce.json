@@ -1,0 +1,55 @@
+{
+    "duration": 4.0,
+    "camera": {
+        "resolution": [1280, 800],
+        "s": 0.4,
+        "transform": [
+        {
+            "translate": [0.0, 0.0, 5.0]
+        }
+        ]
+    },
+    "background": [0.15, 0.12, 0.25],
+    "objects": [
+        {
+        "filename": "pumpkin.ply",
+        "transform_keyframes": [
+            {
+            "time": 0.0,
+            "transform": [
+                { "translate": [0.0, -1.0, 0.0] },
+                { "scale": [1.0, 1.0, 1.0] }
+            ]
+            },
+            {
+            "time": 1.0,
+            "transform": [
+                { "translate": [0.0, 1.0, 0.0] },
+                { "scale": [0.9, 1.2, 0.9] }
+            ]
+            },
+            {
+            "time": 2.0,
+            "transform": [
+                { "translate": [0.0, -1.0, 0.0] },
+                { "scale": [1.2, 0.8, 1.2] }
+            ]
+            },
+            {
+            "time": 3.0,
+            "transform": [
+                { "translate": [0.0, 0.4, 0.0] },
+                { "scale": [0.95, 1.05, 0.95] }
+            ]
+            },
+            {
+            "time": 4.0,
+            "transform": [
+                { "translate": [0.0, -1.0, 0.0] },
+                { "scale": [1.0, 1.0, 1.0] }
+            ]
+            }
+        ]
+        }
+    ]
+    }

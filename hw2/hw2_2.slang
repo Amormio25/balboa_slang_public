@@ -44,6 +44,10 @@ void compute_main(uint2 tid : SV_DispatchThreadID,
         return;
     }
 
+    // LLM usage:
+    // Model: ChatGPT GPT-6
+    // once again here I forgot how cross product formula worked and getting triangle area so I had to ask ChatGPT for help.
+    // Conceptually I was also confused on how barycentric coordinates actually worked so I asked it to explain some of the formulas we saw in class and what they do and how they even lead us to getting proper renderings. 
     float area_012 = tri_area(sp0, sp1, sp2);
     float b0_prime = tri_area(p, sp1, sp2) / area_012;
     float b1_prime = tri_area(sp0, p, sp2) / area_012;

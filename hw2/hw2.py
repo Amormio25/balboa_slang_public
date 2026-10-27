@@ -1,3 +1,4 @@
+from re import L
 import slangpy as spy
 import device
 import buffer
@@ -12,6 +13,9 @@ from PIL import Image
 import os
 
 def hw2_1(args):
+    # LLM usage:
+    # Model: ChatGPT, GPT-6
+    # I was having trouble trying to compile and run the commands to test and I used ChatGPT to understand why, and the fix I received was making sure the thread count when dispatching is of uint3.
     slang_device = spy.create_device()
     compute_shader = device.load_compute_shader(slang_device, 'hw2/hw2_1.slang')
     img = buffer.create_texture_2d(slang_device, args.width, args.height)
@@ -111,7 +115,10 @@ def hw2_2(args):
 
         return x_double_prime, y_double_prime
 
-    # split the triangles onto the screen
+
+    # LLM usage:
+    # Model: Cursor Composer 2.5
+    # I used Cursor to help me understand the variables here a bit better and explain what the starter code was already doing so I could figure out exactly what I was missing or how to access certain properties. For example at first I was wondering we we had mesh.faces and mesh.shape and such, as I thought some of those properties would be under mesh.shape at first. 
     screen_vertices = [to_screen(mesh.vertices[vid, :]) for vid in range(mesh.vertices.shape[0])]
 
     def render(command_encoder, vars, img):
@@ -246,6 +253,7 @@ def hw2_3(args):
             axis=1
         )
 
+        # I asked ChatGPT how I could get the transpose, turns out it was just .T.
         # transpose since vertices are rows
         vertices = vertices @ MVP.T
 
@@ -860,6 +868,9 @@ def hw2_6(args):
             else:
                 model_matrix = mesh.model_matrix
 
+            # LLM usage:
+            # Model: ChatGPT, GPT-6
+            # I was confused conceptually on what was the difference between clip space and screen space and why we can simple replace what we had before. I used ChatGPT to explain the difference and learned that screen space of course was just the final coordinates on the image but clip space helped to take out some parts of triangles out of bounds.
             MVP = clip_projection @ view_matrix @ model_matrix
 
             root = render_pass.bind_pipeline(pipeline)

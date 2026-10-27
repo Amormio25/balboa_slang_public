@@ -256,6 +256,9 @@ def compose_transformations(transformations):
             dir_y /= dir_len
             dir_z /= dir_len
 
+            # LLM usage:
+            # Model: ChatGPT, GPT-6
+            # I forgot how the cross product formula worked and had ChatGPT explain it conceptually and the formula.
             # r=normalize(d x u)
             right_x = dir_y * up_z - dir_z * up_y
             right_y = dir_z * up_x - dir_x * up_z

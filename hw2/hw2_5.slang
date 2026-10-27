@@ -150,6 +150,9 @@ void rasterize_id(
         return;
     }
 
+    // LLM usage:
+    // Model: ChatGPT GPT-6
+    // For help understanding the things conceptually and how they were as code I used ChatGPT. One large confusion I had was why do we have projected vertices if we seem to already be doing all the barycentric calculations to get the contribution of vertices on pixels. I also asked for explanations on what asuint is and the reasoning behind getting depth and having to atomically update.
     uint3 face = faces[tid];
     float3 pv0 = projected_vertices[face.x];
     float3 pv1 = projected_vertices[face.y];

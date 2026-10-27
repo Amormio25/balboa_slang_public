@@ -32,6 +32,10 @@ VertexOutput vertex_main(uint vid : SV_VertexID) {
     // normalize the normal to make it len 1 later on
     // these transformed normals the gpu will blend across triangle and fragment shader gets the world normal as input attribute
     output.world_normal = mul(normal_matrix, n);
+
+    // LLM usage:
+    // Model: ChatGPT GPT-6
+    // I forgot what UV mapping was so I asked ChatGPT how it worked to help me understand how I might use it in this function, and my understanding was just that I needed to assign the already given uv for the vertex id to the output which we'll then send over to fragment main.
     output.uv = vertex_uvs[vid];
     return output;
 }
@@ -39,6 +43,10 @@ VertexOutput vertex_main(uint vid : SV_VertexID) {
 [shader("fragment")]
 float4 fragment_main(VertexOutput input) : SV_Target {
     // HW 2.7 TODO: implement
+
+    // LLM usage:
+    // Model: ChatGPT GPT-6
+    // I used ChatGPT to explain some of the light concepts and what Kd and Ks were for example. Given the writeup I was still confused even with the provided formulas so I used it as like a conceptual teacher to understand better.
     // which way does surface face
     // wheres my light
     //      just one direction so it should be the same for each px

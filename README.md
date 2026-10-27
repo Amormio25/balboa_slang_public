@@ -38,3 +38,12 @@ Balboa depends on [SlangPy](https://github.com/shader-slang/slangpy) as a GPU pr
 
 - **Designed Scene:** 'scenes/hw1/windows_logo.json'
 - **Output Rendering:** 'outputs/windows_logo.png'
+
+## Part 8 Pumpkin Bounce
+* **Designed scene:** 'scenes/hw2/pumpkin_bounce.json'
+* **Object Mesh:** 'scenes/hw2/pumpkin.ply'
+* **Output Rendering:** 'outputs/pumpkin_bounce.png'
+
+To run the pumpkin animation:
+```bash
+uv run python main.py 2_4 scenes/hw2/pumpkin_bounce.json

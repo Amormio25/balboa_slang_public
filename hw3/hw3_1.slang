@@ -16,6 +16,8 @@ void compute_main(uint2 tid : SV_DispatchThreadID,
     image[tid] = float4(background, 1.0);    
 
     // ray tracing starts with pixels and asks: what does this pixel see in the scene? so not 3d to screen space, we have pixel and figure which 3d dir camera passes through it
+    // or rather by reversing the loops, for each pixel for each triangle, it's like we're asking what object does this pixel see? Instead of a buffer we calculate closest ray intersections. 
+
     // so find px center and convert to image plane coords
     // make a ray
     // loop through each sphere to find intersections

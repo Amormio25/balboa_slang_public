@@ -22,5 +22,287 @@ void compute_main(uint2 tid : SV_DispatchThreadID,
         return;
     }
 
-    image[tid] = float4(background, 1.0);
+    // not just rendering triangles, but it means we'll have meshes and spheres
+    // triangle_mesh will have vertex offset, triangle begin and end to loop for each triangle
+    // so vertices and vertex_offset should be some per triangle
+
+    // so keep same code for spheres
+    // 
+
+    // loop through meshes
+    // for each mesh
+    //      for each light
+    //          for each triangle
+    //              use vertex offset, tri begin/end, vertices/vertex normals
+    //              for rendering
+    //              use intersection helper for both rendering triangle and
+    //              accounting for the lights and shadows
+    // might have to incorporate previous sphere code because it's possible that we have lights to spheres or triangles being blocked by another shape, and it's also possible that mirror reflections reflect on a different shape than from where it came
+
+
+    // primary ray intersection: check both spheres and triangles and keep closest t
+
+    // checking light is blocked, must check both spheres and triangles
+    // after reflecting off either sphere or triangle, check if it will bounce off the other as well
+
+
+    // for bounce loop
+    //      for num shapes loop
+    //          check if sphere or triangle
+    //      get closest hit out of triangles and spheres
+    // if we hit we have the hit point and hit shape
+    // for each light
+    //      for each shape
+    //          check if we hit obstacle
+    //          else set light
+    //      reflect
+    
+
+
+    float aspect_ratio = float(width) / float(height);
+    float2 px_center = float2(tid.x + 0.5, height - tid.y - 0.5);
+
+    float normalized_x = px_center.x / width;
+    float normalized_y = px_center.y / height;
+
+    float image_x = normalized_x * 2 * aspect_ratio - aspect_ratio;
+    float image_y = normalized_y * 2 - 1;
+
+    float3 p = float3(image_x, image_y, -1); // point on image plane
+    float3 camera_to_point_ray = p;
+
+    float t_min = EPSILON; // prevent self intersection
+
+    float3 color = 0.0;
+    float3 throughput = 1.0;
+    float3 total_light = 0.0;
+    // ray origin will change as we reflect, this how we can update/keep track
+    
+    // get ray origin and first ray in world space
+    float3 ray_origin = xform_pt(camera.cam_to_world, float3(0.0, 0.0, 0.0));
+    camera_to_point_ray = xform_vec(camera.cam_to_world, p);
+    
+    // main change is that intersections happen in object space but things like normals and hit point for lighting are part of the scene so that's world space
+    
+    for (int bounce = 0; bounce < max_depth; bounce++) {
+        float closest_t = 1e30;
+        int hit_i = -1;
+        float3 hit_b = 0.0; // to store if closest was triangle
+        uint3 hit_tri = 0;
+
+        for (int i = 0; i < num_shapes; i++) {
+            // get the object space origin and ray
+            float3 org_o = xform_pt(shapes[i].world_to_obj, ray_origin);
+            float3 dir_o = xform_vec(shapes[i].world_to_obj, camera_to_point_ray);
+
+            if (shapes[i].type == ShapeType.Sphere) {
+                Sphere sphere = spheres[shapes[i].index];
+                float3 center = sphere.center;
+                float radius = sphere.radius;
+
+                float a = dot(dir_o, dir_o);
+                float b = -2.0 * (
+                    dot(dir_o, center) - 
+                    dot(org_o, dir_o));
+                float c = -2.0 * dot(org_o, center) + 
+                                dot(org_o, org_o) + 
+                                dot(center, center) - pow(radius, 2);
+
+                float2 roots;
+                if (!solve_quadratic(a, b, c, roots)) {
+                    continue;
+                }
+
+                float t_hit = 1e30;
+                if (roots.x > t_min && roots.x < t_hit) t_hit = roots.x;
+                if (roots.y > t_min && roots.y < t_hit) t_hit = roots.y;
+                if (t_hit < closest_t) {
+                    closest_t = t_hit;
+                    hit_i = i; 
+                }
+            } else {
+                TriangleMesh mesh = meshes[shapes[i].index];
+                for (int j = mesh.triangle_begin; j < mesh.triangle_end; j++) {
+                    uint3 tri = triangles[j] + mesh.vertex_offset;
+                    float3 v0 = vertices[tri.x];
+                    float3 v1 = vertices[tri.y];
+                    float3 v2 = vertices[tri.z];
+                    
+                    // the helper uses something like pointers for updating
+                    float3 b;
+                    float t_hit;
+                    bool triangle_hit = intersect_tri(v0, v1, v2, org_o, dir_o, t_min, closest_t, b, t_hit);
+
+                    if (triangle_hit && t_hit < closest_t) {
+                        hit_i = i;
+                        closest_t = t_hit;
+                        hit_b = b;
+                        hit_tri = tri;
+                    }
+                }
+
+            }
+        }
+
+        if (hit_i == -1) {
+            color += throughput * background;
+            break;
+        }
+
+        if (hit_i != -1) {
+            total_light = 0.0;
+            float3 hit_point = ray_origin + closest_t * camera_to_point_ray;
+            float3 n;
+
+            if (shapes[hit_i].type == ShapeType.Sphere) {
+                Sphere hit_sphere = spheres[shapes[hit_i].index];
+                float3 org_o = xform_pt(shapes[hit_i].world_to_obj, ray_origin);
+                float3 dir_o = xform_vec(shapes[hit_i].world_to_obj, camera_to_point_ray);
+
+                // intersection hit point in object space
+                float3 hit_o = org_o + closest_t * dir_o;
+                n = normalize(xform_vec(shapes[hit_i].obj_to_world,
+                                        normalize(hit_o - hit_sphere.center)));
+
+                for (int j = 0; j < num_lights; j++) {
+                    float3 intersection_to_light = lights[j].position - hit_point;
+                    float3 shadow_dir = normalize(intersection_to_light);
+                    float t_max = length(intersection_to_light);
+
+                    bool obstacle_hit = false;
+                    for (int k = 0; k < num_shapes; k++) {
+                        float3 shadow_org_o = xform_pt(shapes[k].world_to_obj, hit_point);
+                        float3 shadow_dir_o = xform_vec(shapes[k].world_to_obj, intersection_to_light);
+
+                        if (shapes[k].type == ShapeType.Sphere) {
+                            Sphere maybe_sphere_obstacle = spheres[shapes[k].index];
+                            float3 center = maybe_sphere_obstacle.center;
+                            float radius = maybe_sphere_obstacle.radius;
+
+                            float a = dot(shadow_dir_o, shadow_dir_o);
+                            float b = -2.0 * (
+                                dot(shadow_dir_o, center) - 
+                                dot(shadow_org_o, shadow_dir_o));
+                            float c = -2.0 * dot(shadow_org_o, center) + 
+                                            dot(shadow_org_o, shadow_org_o) + 
+                                            dot(center, center) - pow(radius, 2);
+
+                            float2 shadow_roots;
+                            if (!solve_quadratic(a, b, c, shadow_roots)) {
+                                continue;
+                            }
+
+                            if (shadow_roots.x > t_min && shadow_roots.x < t_max)  {
+                                obstacle_hit = true;
+                            }
+                            if (shadow_roots.y > t_min && shadow_roots.y < t_max)  {
+                                obstacle_hit = true;
+                            }
+                        } else {
+                            TriangleMesh mesh = meshes[shapes[k].index];
+                            for (int t = mesh.triangle_begin; t < mesh.triangle_end; t++) {
+                                uint3 tri = triangles[t] + mesh.vertex_offset;
+                                float3 v0 = vertices[tri.x];
+                                float3 v1 = vertices[tri.y];
+                                float3 v2 = vertices[tri.z];
+                                float3 b_unused;
+                                float t_shadow;
+                                if (intersect_tri(v0, v1, v2, shadow_org_o, shadow_dir_o,
+                                                t_min, t_max, b_unused, t_shadow)) {
+                                    obstacle_hit = true;
+                                    break;
+                                }
+                            }
+                            if (obstacle_hit) {
+                                break;
+                            }
+                        }
+                        
+                    }
+
+                    if (!obstacle_hit) {
+                        float3 l = normalize(intersection_to_light);
+
+                        total_light += shapes[hit_i].Kd * lights[j].intensity * 1 / pow(t_max, 2) * max(0.0, dot(n, l));
+                    }
+                }
+            } else {
+                float3 n_o = normalize(
+                    hit_b.x * vertex_normals[hit_tri.x] +
+                    hit_b.y * vertex_normals[hit_tri.y] +
+                    hit_b.z * vertex_normals[hit_tri.z]
+                );
+                n = normalize(xform_vec(shapes[hit_i].obj_to_world, n_o));
+                for (int j = 0; j < num_lights; j++) {
+                    float3 intersection_to_light = lights[j].position - hit_point;
+                    float3 shadow_dir = normalize(intersection_to_light);
+                    float t_max = length(intersection_to_light);
+
+                    bool obstacle_hit = false;
+                    for (int k = 0; k < num_shapes; k++) {
+                        float3 shadow_org_o = xform_pt(shapes[k].world_to_obj, hit_point);
+                        float3 shadow_dir_o = xform_vec(shapes[k].world_to_obj, intersection_to_light);
+
+                        if (shapes[k].type == ShapeType.Sphere) {
+                            Sphere maybe_sphere_obstacle = spheres[shapes[k].index];
+                            float3 center = maybe_sphere_obstacle.center;
+                            float radius = maybe_sphere_obstacle.radius;
+
+                            float a = dot(shadow_dir_o, shadow_dir_o);
+                            float b = -2.0 * (
+                                dot(shadow_dir_o, center) - 
+                                dot(shadow_org_o, shadow_dir_o));
+                            float c = -2.0 * dot(shadow_org_o, center) + 
+                                            dot(shadow_org_o, shadow_org_o) + 
+                                            dot(center, center) - pow(radius, 2);
+
+                            float2 shadow_roots;
+                            if (!solve_quadratic(a, b, c, shadow_roots)) {
+                                continue;
+                            }
+
+                            if (shadow_roots.x > t_min && shadow_roots.x < t_max)  {
+                                obstacle_hit = true;
+                            }
+                            if (shadow_roots.y > t_min && shadow_roots.y < t_max)  {
+                                obstacle_hit = true;
+                            }
+                        } else {
+                            TriangleMesh mesh = meshes[shapes[k].index];
+                            for (int t = mesh.triangle_begin; t < mesh.triangle_end; t++) {
+                                uint3 tri = triangles[t] + mesh.vertex_offset;
+                                float3 v0 = vertices[tri.x];
+                                float3 v1 = vertices[tri.y];
+                                float3 v2 = vertices[tri.z];
+                                float3 b_unused;
+                                float t_shadow;
+                                if (intersect_tri(v0, v1, v2, shadow_org_o, shadow_dir_o,
+                                                t_min, t_max, b_unused, t_shadow)) {
+                                    obstacle_hit = true;
+                                    break;
+                                }
+                            }
+                            if (obstacle_hit) {
+                                break;
+                            }
+                        }
+                        
+                    }
+
+                    if (!obstacle_hit) {
+                        float3 l = normalize(intersection_to_light);
+
+                        total_light += shapes[hit_i].Kd * lights[j].intensity * 1 / pow(t_max, 2) * max(0.0, dot(n, l));
+                    }
+                }
+            }
+            color += throughput * total_light;
+            throughput *= shapes[hit_i].Kr;
+
+            float3 reflected_dir = reflect(normalize(camera_to_point_ray), n);
+            ray_origin = hit_point + EPSILON * reflected_dir;
+            camera_to_point_ray = reflected_dir;
+        }
+    }
+    image[tid] = float4(color, 1.0);
 }

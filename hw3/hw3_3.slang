@@ -17,6 +17,10 @@ void compute_main(uint2 tid : SV_DispatchThreadID,
         return;
     }
 
+    // LLM Usage:
+    // Model: ChatGPT, GPT-6
+    // I  used ChatGPT to brainstorm after being confused how throughput and contribution and the other stuff from the equation in the writeup made sense or transferred over to this new problem. My initial confusion was not knowing what throughput was and how contribution differed from my total_lights that I already had.
+
     // should be about the same thing as 3.2, but need to account for mirror reflection. 3.1 handled normal rendering, 3.2 accounted for lights and shadows, this one in addition to lights and shadows, at the hit point on sphere we need to check if this shape has a Kr > 0, and if so reflect by tracing ray in the mirror reflection direction. that ray should go tmax and if no hits, stay bg color.
 
     // so because that reflection ray can keep hitting other spheres, conceptually that means we'd need to find out the color and light contributions etc on that sphere, so its like we wrap everything inside the iterative loop

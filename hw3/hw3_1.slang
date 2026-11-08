@@ -15,6 +15,10 @@ void compute_main(uint2 tid : SV_DispatchThreadID,
 
     image[tid] = float4(background, 1.0);    
 
+    // LLM Usage:
+    // Model: ChatGPT, GPT-6
+    // I was a bit confused at first why we needed to get image space coordinates rather than screen space coordinates so I used ChatGPT for learning how hw3 differed from hw2 in that we're looking from camera through an image space coordinate to the object.
+
     // ray tracing starts with pixels and asks: what does this pixel see in the scene? so not 3d to screen space, we have pixel and figure which 3d dir camera passes through it
     // or rather by reversing the loops, for each pixel for each triangle, it's like we're asking what object does this pixel see? Instead of a buffer we calculate closest ray intersections. 
 

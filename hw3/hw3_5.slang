@@ -21,6 +21,9 @@ void compute_main(uint2 tid : SV_DispatchThreadID,
     if (tid.x >= width || tid.y >= height) {
         return;
     }
+    // LLM Usage:
+    // Model: ChatGPT, GPT-6
+    // I used ChatGPT after getting quite stuck about how to consider normalizations for this problem because I didn't understand at first what calculations belonged in object vs world space. I also needed to brainstorm to refresh my knowledge on the mesh calculations and what was being done for me already in the helper vs what I needed to implement.
 
     // not just rendering triangles, but it means we'll have meshes and spheres
     // triangle_mesh will have vertex offset, triangle begin and end to loop for each triangle

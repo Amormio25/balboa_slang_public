@@ -18,6 +18,9 @@ void compute_main(uint2 tid : SV_DispatchThreadID,
 
     image[tid] = float4(background, 1.0);
 
+    // LLM Usage:
+    // Model: ChatGPT, GPT-6
+    // I was having a bit of a hard time figuring out where we'd loop over lights, all I knew for sure was that it's possible that a light might hit an obstacle that could be any shape. I used ChatGPT to brainstorm a way to think about where it should be. Also I had it explain why the total lights formula was in this way because I struggled to understand why.
 // {
 //     "background": [0.5, 0.5, 0.5],
 //     "objects": [

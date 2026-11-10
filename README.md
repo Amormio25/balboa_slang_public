@@ -39,7 +39,7 @@ Balboa depends on [SlangPy](https://github.com/shader-slang/slangpy) as a GPU pr
 - **Designed Scene:** 'scenes/hw1/windows_logo.json'
 - **Output Rendering:** 'outputs/windows_logo.png'
 
-## Part 8 Pumpkin Bounce
+## HW 2 Part 8 Pumpkin Bounce
 * **Designed scene:** 'scenes/hw2/pumpkin_bounce.json'
 * **Object Mesh:** 'scenes/hw2/pumpkin.ply'
 * **Output Rendering:** 'outputs/pumpkin_bounce.png'
@@ -47,3 +47,15 @@ Balboa depends on [SlangPy](https://github.com/shader-slang/slangpy) as a GPU pr
 To run the pumpkin animation:
 ```bash
 uv run python main.py 2_4 scenes/hw2/pumpkin_bounce.json
+
+## HW 3 Part 7 Ornaments
+
+### Scene Location & Render Output
+* **Scene File Location:** `scenes/hw3/ornaments.json`
+* **Render Output:** `outputs/ornaments.png`
+* **Additional Output Files:** Includes the complete set of rendered output files generated across the homework tasks in the `outputs/` directory.
+
+### Source Files & Dependencies
+* **Core Slang & Scene Code:** Includes common slang shader files (`hw3/hw3_6.slang`, core parsing logic in `hw3/hw3_scene.py`, and device configuration files) required to compile and render the ray-traced scenes.
+
+

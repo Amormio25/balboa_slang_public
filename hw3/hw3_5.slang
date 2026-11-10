@@ -63,15 +63,16 @@ void compute_main(uint2 tid : SV_DispatchThreadID,
 
 
     float aspect_ratio = float(width) / float(height);
-    float2 px_center = float2(tid.x + 0.5, height - tid.y - 0.5);
+    float fov_radians = radians(camera.fov_x);
+    float plane_width = 2.0 * tan(fov_radians * 0.5);
+    float plane_height = plane_width / aspect_ratio;
 
-    float normalized_x = px_center.x / width;
-    float normalized_y = px_center.y / height;
-
-    float image_x = normalized_x * 2 * aspect_ratio - aspect_ratio;
-    float image_y = normalized_y * 2 - 1;
-
-    float3 p = float3(image_x, image_y, -1); // point on image plane
+    float2 uv = (float2(tid) + 0.5) / float2(width, height);
+    float3 p = float3(
+        (uv.x - 0.5) * plane_width,
+        (0.5 - uv.y) * plane_height,
+        -1.0
+    );
     float3 camera_to_point_ray = p;
 
     float t_min = EPSILON; // prevent self intersection

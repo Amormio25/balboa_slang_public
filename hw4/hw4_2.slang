@@ -50,12 +50,12 @@ void project_constraints(uint tid : SV_DispatchThreadID,
     //      average corrections from prev and next
     //      the corrections depend on the inv_masses
 
-    float3 xi = positions_in[tid];
+    float3 pos = positions_in[tid];
     float wi = inv_masses[tid];
 
     // inf mass should stay put
     if (wi == 0.0) {
-        positions_out[tid] = xi;
+        positions_out[tid] = pos;
         return;
     }
 
@@ -65,7 +65,7 @@ void project_constraints(uint tid : SV_DispatchThreadID,
     int num_corrections = 0;
     if (tid > 0) {
         int prev = tid-1;
-        correction += get_correction(xi, positions_in[prev], wi, inv_masses[prev], rest_lengths[tid-1]);
+        correction += get_correction(pos, positions_in[prev], wi, inv_masses[prev], rest_lengths[tid-1]);
         num_corrections += 1;
     }
 
@@ -73,7 +73,7 @@ void project_constraints(uint tid : SV_DispatchThreadID,
         int next = tid+1;
 
         // rest length tid is the one between ball and ball+1
-        correction += get_correction(xi, positions_in[next], wi, inv_masses[next], rest_lengths[tid]);
+        correction += get_correction(pos, positions_in[next], wi, inv_masses[next], rest_lengths[tid]);
         num_corrections += 1;
     }
 
@@ -81,7 +81,7 @@ void project_constraints(uint tid : SV_DispatchThreadID,
         correction /= num_corrections;
     }
 
-    positions_out[tid] = xi + correction;
+    positions_out[tid] = pos + correction;
 }
 
 float3 get_correction(float3 pos_original, float3 pos_neighbor, float inv_mass_original, float inv_mass_neighbor, float rest_length_neighbor) {

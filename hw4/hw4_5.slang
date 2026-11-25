@@ -30,6 +30,52 @@ void detect_collision(uint tid : SV_DispatchThreadID,
         return;
     }
     // TODO: HW 4.5. Your code below.
+
+    if (inv_masses[tid] == 0.0) {
+        contact_planes[tid] = float4(0.0);
+        return;
+    }
+
+    float3 pos = positions[tid];
+    float min_sdf = 1e30;
+    float3 best_n = float3(0.0);
+    float best_d = 0.0;
+
+    for (uint i = 0; i < num_planes; i++) {
+        float4 pl = planes[i];
+        float3 n = normalize(pl.xyz);
+        float d = pl.w;
+        float sdf = dot(n, pos) - d;
+        if (sdf < min_sdf) {
+            min_sdf = sdf;
+            best_n = n;
+            best_d = d;
+        }
+    }
+
+    for (uint j = 0; j < num_spheres; j++) {
+        float4 sp = spheres[j];
+        float3 center = sp.xyz;
+        float radius = sp.w;
+        float3 to_pos = pos - center;
+        float dist = length(to_pos);
+        float sdf = dist - radius;
+
+        if (sdf < min_sdf) {
+            min_sdf = sdf;
+            float3 n = (dist > 1e-8) ? (to_pos / dist) : float3(0.0, 1.0, 0.0);
+            float3 surf_pt = center + n * radius;
+            best_n = n;
+            best_d = dot(n, surf_pt);
+        }
+    }
+
+    float threshold = contact_margin + collision_distance;
+    if (min_sdf < threshold) {
+        contact_planes[tid] = float4(best_n, best_d + collision_distance);
+    } else {
+        contact_planes[tid] = float4(0.0);
+    }
 }
 
 [shader("compute")]
@@ -51,6 +97,66 @@ void project_constraints(uint tid : SV_DispatchThreadID,
         return;
     }
     // TODO: HW 4.5. Your code below.
+
+    float3 pos = positions_in[tid];
+    float wi = inv_masses[tid];
+
+    if (wi == 0.0) {
+        positions_out[tid] = pos;
+        return;
+    }
+
+    uint start = row_ptr[tid];
+    uint end = row_ptr[tid + 1];
+    float3 correction = float3(0.0);
+    uint num_corrections = 0;
+
+    for (uint k = start; k < end; k++) {
+        uint neighbor_idx = neighbors[k];
+        float rest_len = neighbor_rest[k];
+        float3 neighbor_pos = positions_in[neighbor_idx];
+        float wj = inv_masses[neighbor_idx];
+
+        correction += get_correction(pos, neighbor_pos, wi, wj, rest_len);
+        num_corrections += 1;
+    }
+
+    if (num_corrections > 0) {
+        correction /= float(num_corrections);
+    }
+
+    float3 x = pos + correction;
+
+    float4 cp = contact_planes[tid];
+    float3 n = cp.xyz;
+    float n_len = length(n);
+    if (n_len > 1e-8) {
+        n /= n_len;
+        float d = cp.w;
+        float sd = dot(n, x) - d;
+
+        if (sd < 0.0) {
+            float penetration = -sd;
+            //push out along contact normal
+            x += n * penetration;
+
+            float3 old_pos = old_positions[tid];
+            float3 disp = x - old_pos;
+            float3 tangent = disp - dot(disp, n) * n;
+            float tangent_len = length(tangent);
+
+            if (tangent_len > 1e-8) {
+                if (tangent_len <= static_friction * penetration) {
+                    x -= tangent;
+                } else {
+                    float pull = min(tangent_len, kinetic_friction * penetration);
+                    x -= (tangent / tangent_len) * pull;
+                }
+            }
+        }
+    }
+
+    positions_out[tid] = x;
 }
 
 [shader("compute")]
@@ -66,4 +172,32 @@ void update_velocity(uint tid : SV_DispatchThreadID,
         return;
     }
     // TODO: HW 4.5. Your code below.
+
+    float3 pos = positions[tid];
+    float3 old_pos = old_positions[tid];
+
+    if (inv_masses[tid] != 0.0) {
+        positions[tid] = pos;
+        velocities[tid] = (pos - old_pos) / dt;
+    } else {
+        positions[tid] = pos;
+        velocities[tid] = float3(0.0);
+    }
+}
+
+float3 get_correction(float3 pos_original, float3 pos_neighbor, float inv_mass_original, float inv_mass_neighbor, float rest_length_neighbor) {
+    float distance = length(pos_neighbor - pos_original);
+
+    // basically next to each other or zero inv mass, so don't divide by distance
+    if (distance < 1e-8 || inv_mass_original + inv_mass_neighbor <= 0.0) {
+        return float3(0.0);
+    }
+
+    float err = distance - rest_length_neighbor;
+
+    // move the ball along the direction by its mass share times the error
+    return (inv_mass_original / (inv_mass_original + inv_mass_neighbor) 
+            * err 
+            * ((pos_neighbor - pos_original) / distance));
+
 }

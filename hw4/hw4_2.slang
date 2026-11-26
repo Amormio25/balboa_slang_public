@@ -44,6 +44,10 @@ void project_constraints(uint tid : SV_DispatchThreadID,
     if (tid >= num_particles) {
         return;
     }
+    // LLM Usage:
+    // Model: ChatGPT, GPT-6
+    // I was super close but had to use ChatGPT for debugging. The test command didn't seem to render right and using AI for debugging, I noticed my mistake was having rest_lengths[tid+1] for "next" instead of what we have now.
+
     // TODO: HW 4.2. Your code below.
 
     // for each ball in range 1, num_particles-2

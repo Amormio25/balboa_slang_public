@@ -58,4 +58,15 @@ uv run python main.py 2_4 scenes/hw2/pumpkin_bounce.json
 ### Source Files & Dependencies
 * **Core Slang & Scene Code:** Includes common slang shader files (`hw3/hw3_6.slang`, core parsing logic in `hw3/hw3_scene.py`, and device configuration files) required to compile and render the ray-traced scenes.
 
+## HW 4 Custom Scene: Cloth on Water Bottle
+
+* **Designed scene:** `scenes/hw4/cloth_water_bottle.py` (procedural bottle mesh via trimesh)
+* **Output rendering:** `outputs/hw4_custom_cloth_bottle.mp4`
+
+```bash
+uv run python main.py 4_6 scenes/hw4/cloth_water_bottle.py
+uv run python main.py 4_6 scenes/hw4/cloth_water_bottle.py \
+  -output outputs/hw4_custom_cloth_bottle.mp4 -duration 5 -fps 30
+```
+
 

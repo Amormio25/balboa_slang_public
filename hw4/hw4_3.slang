@@ -10,6 +10,11 @@ void project_constraints(uint tid : SV_DispatchThreadID,
         return;
     }
     // TODO: HW 4.3. Your code below.
+
+    // LLM Usage:
+    // Model: ChatGPT, GPT-6
+    // First, I used ChatGPT to figure out how I could make something like an array of tuples in slang for the directions possible. Then I used it for general purpose brainstorming because I was trying to better understand how much it differed from 4.2, as my initial thoughts were that we just account for more things like 2 over and diagonals. 
+
     // main change is just that instead of a 1d connected rope like object we have a sheet
     // corners this time don't move?
 

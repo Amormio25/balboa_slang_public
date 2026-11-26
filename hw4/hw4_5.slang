@@ -134,22 +134,22 @@ void project_constraints(uint tid : SV_DispatchThreadID,
         n /= n_len;
         float d = cp.w;
         float sd = dot(n, x) - d;
-
         if (sd < 0.0) {
             float penetration = -sd;
-            //push out along contact normal
             x += n * penetration;
 
+            // Resting contact has tiny leftover penetration; floor so grip still works.
+            float mu_n = max(penetration, 0.04);
             float3 old_pos = old_positions[tid];
             float3 disp = x - old_pos;
             float3 tangent = disp - dot(disp, n) * n;
             float tangent_len = length(tangent);
 
             if (tangent_len > 1e-8) {
-                if (tangent_len <= static_friction * penetration) {
+                if (tangent_len <= static_friction * mu_n) {
                     x -= tangent;
                 } else {
-                    float pull = min(tangent_len, kinetic_friction * penetration);
+                    float pull = min(tangent_len, kinetic_friction * mu_n);
                     x -= (tangent / tangent_len) * pull;
                 }
             }
